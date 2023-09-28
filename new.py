@@ -4,7 +4,11 @@ import streamlit as st
 import openai
 import os
 from dotenv import load_dotenv
-from helper import upload_file_to_blob, list_blob_files, read_blob_data
+from helper import upload_file_to_blob, list_blob_files, read_blob_data,tanslator
+from streamlit.logger import get_logger
+
+logger = get_logger(__name__)
+
 
 # Configure OpenAI API
 load_dotenv('.env')
@@ -17,6 +21,12 @@ openai.api_key = os.getenv('api_key')
 STORAGEACCOUNTURL = os.getenv('STORAGEACCOUNTURL')
 STORAGEACCOUNTKEY = os.getenv('STORAGEACCOUNTKEY')
 CONTAINERNAME = os.getenv('CONTAINERNAME')
+
+key = os.getenv('key')
+endpoint = os.getenv('endpoint')
+location = os.getenv('location')
+path = '/translate'
+
 
 # Define the Streamlit app
 def main():
@@ -64,6 +74,7 @@ def chat_page():
 
     # Chat with the combined data
     user_input = st.text_input("You:", "")
+
     if st.button("Generate Response"):
         input_prompt = f"All Uploaded Data:\n{combined_data}\nUser Input: {user_input}"
 
@@ -75,8 +86,21 @@ def chat_page():
         )
 
         assistant_reply = response.choices[0].text.strip()
-        st.text("Assistant:")
         st.text(assistant_reply)
+        st.session_state['translate_text'] = assistant_reply
+    
+    if st.button("Translate"):
+        if 'translate_text' not in st.session_state:
+            st.session_state['translate_text'] = 'Value not Added'
+            logger.info(st.session_state['translate_text'])
+        else:
+            logger.info(st.session_state['translate_text'])
+            translate_text = st.session_state['translate_text']
+            translate = tanslator(key,endpoint,location,path,translate_text)
+            logger.info(translate)
+            st.text(translate)
+
+            
 
 if __name__ == "__main__":
     main()

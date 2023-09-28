@@ -1,5 +1,6 @@
 import os
 from azure.storage.blob import BlobServiceClient
+import requests, uuid, json
 
 def upload_file_to_blob(file, STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME):
     """
@@ -75,3 +76,59 @@ Returns:
     except Exception as e:
         print(f"Error listing blob files: {str(e)}")
         return []
+
+
+def tanslator(key,endpoint,location,path,text_content):
+    '''
+       About:
+       ---------
+       Translates a text with the help of Azure Translator.
+
+        Parameter
+        ---------
+        key : str
+            key to Azure Translator.HIGHLY Restricted
+        endpoint : str
+            Endpoint of  Azure Translator. 
+        location : str
+            Location of Translator.
+        path : str
+            Path to define what is needed to be done.like translate and all etc.
+        text_content : str
+            Text to be converted from Azure Translator
+
+        Returns
+        -------
+        string
+    
+    '''
+    try:
+        constructed_url = endpoint + path
+
+        params = {
+            'api-version': '3.0',
+            'from': 'en',
+            'to': ['fr', 'hi']
+        }
+
+        headers = {
+            'Ocp-Apim-Subscription-Key': key,
+            # location required if you're using a multi-service or regional (not global) resource.
+            'Ocp-Apim-Subscription-Region': location,
+            'Content-type': 'application/json',
+            'X-ClientTraceId': str(uuid.uuid4())
+        }
+
+        body = [{
+            'text': text_content
+        }]
+
+        request = requests.post(constructed_url, params=params, headers=headers, json=body)
+        response = request.json()
+
+        # Extract the translated text from the response
+        return response[0]['translations'][1]['text']
+    
+    except Exception as e:
+        return {str(e)}
+    
