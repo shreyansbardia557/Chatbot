@@ -4,8 +4,9 @@ import streamlit as st
 import openai
 import os
 from dotenv import load_dotenv
-from helper import upload_file_to_blob, list_blob_files, read_blob_data, tanslator
+from helper import upload_file_to_blob, list_blob_files, read_blob_data, tanslator,calculate_cost
 from streamlit.logger import get_logger
+from PIL import Image
 
 logger = get_logger(__name__)
 
@@ -32,37 +33,63 @@ target_languages = ["fr", "hi", "es", "de"]
 
 # Define the Streamlit app
 def main():
-    st.set_page_config(page_title="Chat with Azure Blob Storage Data")
-    st.header("Interact with Data in Azure Blob Storage 📂")
+    st.set_page_config(page_title="HSBC WittyFeed")
+    st.title("HSBC WittyFeed🤓")
+    st.text("Welcome! Interact with the Data World 📂")
+    #image = Image.open('C:\\Users\\acer\\OneDrive\\Desktop\\HSBC-Symbol.jpeg')
+
+    st.image("https://1000logos.net/wp-content/uploads/2017/02/HSBC-Logo.png", width=300)
 
     # Sidebar navigation
-    page = st.sidebar.selectbox("Select Page", ["Upload Data", "Chat"])
+    page = st.sidebar.selectbox("Select Page", ["Upload Data", "Chat","Costing"], index=1)
 
-    if page == "Upload Data":
-        upload_page()
-    elif page == "Chat":
+    if page == "Chat":
         chat_page()
+        
+    elif page == "Upload Data":
+        upload_page()
+    elif page == "Costing":
+        costing_page()
 
+
+
+
+# Costing page
+def costing_page():
+    st.subheader("Cost Estimation 💲")
+
+    # Get the latest response from the session state
+    if 'latest_response' in st.session_state:
+        latest_response = st.session_state['latest_response']
+        cost, total_tokens, input_cost, pt, generative_cost, ct = calculate_cost(latest_response)
+        st.write(f"Estimated cost: ${cost:.6f}")
+        st.write(f"Total Tokens: {total_tokens}")
+        st.write(f"input prompt cost: {input_cost}")
+        st.write(f"Prompt Tokens: {pt}")
+        st.write(f"Completion cost: {generative_cost}")
+        st.write(f"Completion Tokens: {ct}")
 # Upload data to Azure Blob Storage
 def upload_page():
-    st.subheader("Upload Files to Azure Blob Storage 📤")
+   
+    st.subheader("Upload Files to Storage 📤")
 
     # Upload multiple files to Azure Blob Storage
-    files = st.file_uploader("Upload multiple files to Azure Blob Storage", type=["txt"], accept_multiple_files=True)
+    files = st.file_uploader("", type=["txt"], accept_multiple_files=True)
     if files:
         for file in files:
             file_name = upload_file_to_blob(file, STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME)
             st.success(f"File '{file_name}' uploaded to '{CONTAINERNAME}/{file_name}'")
 
     # Sidebar to display uploaded files
-    st.sidebar.title("Uploaded Files in Azure Blob Storage")
+    st.sidebar.caption("Uploaded Files in Azure Blob Storage")
     uploaded_files = list_blob_files(STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME)
     for file_name in uploaded_files:
         st.sidebar.write(file_name)
 
 # Chat with the uploaded data
 def chat_page():
-    st.subheader("Interact with All Uploaded Files:")
+    
+    st.caption("Please input your query below 👇")
     uploaded_files = list_blob_files(STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME)
     all_data = []
 
@@ -86,9 +113,13 @@ def chat_page():
             temperature=0.7,
             max_tokens=1000,  # Increase token limit to accommodate longer responses
         )
-
+        
         assistant_reply = response.choices[0].text.strip()
         st.text(assistant_reply)
+        st.session_state['latest_response'] = response
+        # st.text(response.usage.prompt_tokens)
+        # st.text(response.usage.completion_tokens)
+        # st.text(response.usage.total_tokens)
         st.session_state['translate_text'] = assistant_reply
 
     selected_language = st.selectbox("Select Target Language:", target_languages)

@@ -2,6 +2,7 @@ import os
 from azure.storage.blob import BlobServiceClient
 import requests
 import uuid
+import openai
 
 def upload_file_to_blob(file, STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME):
     """
@@ -107,3 +108,27 @@ def tanslator(key, endpoint, location, path, text_content, target_language):
 
     except Exception as e:
         return str(e)
+    
+def calculate_cost(response, cost_per_token=0.00002):
+    """
+    Calculate the cost of the OpenAI API response based on the number of tokens.
+
+    Parameters:
+        response: The OpenAI API response object.
+        cost_per_token (float): Based on the OpenAI website, the text-davinci-003 model is $0.02 per 1000 tokens
+
+    Returns:
+        float: The calculated cost and other details adding up to cost
+    """
+    try: 
+        usage = response.usage
+        pt=usage.prompt_tokens #can be removed
+        ct=usage.completion_tokens #can be removed
+        input_cost=pt * cost_per_token #can be removed
+        generative_cost=ct * cost_per_token #can be removed
+        total_tokens = usage.total_tokens 
+        cost = total_tokens * cost_per_token
+
+        return cost,total_tokens,input_cost,pt,generative_cost,ct
+    except AttributeError:
+        return 0.0
