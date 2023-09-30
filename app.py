@@ -33,19 +33,18 @@ target_languages = ["fr", "hi", "es", "de"]
 
 # Define the Streamlit app
 def main():
-    st.set_page_config(page_title="HSBC WittyFeed")
-    st.title("HSBC WittyFeed🤓")
-    st.text("Welcome! Interact with the Data World 📂")
-    #image = Image.open('C:\\Users\\acer\\OneDrive\\Desktop\\HSBC-Symbol.jpeg')
+    st.set_page_config(page_title="HSBC ChatBot")
+    
+    # Add logo and company name in the sidebar
+    st.sidebar.image("https://1000logos.net/wp-content/uploads/2017/02/HSBC-Logo.png", width=200 )
 
-    st.image("https://1000logos.net/wp-content/uploads/2017/02/HSBC-Logo.png", width=300)
+    
 
     # Sidebar navigation
-    page = st.sidebar.selectbox("Select Page", ["Upload Data", "Chat","Costing"], index=1)
+    page = st.sidebar.selectbox("Select Page", ["Upload Data", "Chat", "Costing"], index=1)
 
     if page == "Chat":
         chat_page()
-        
     elif page == "Upload Data":
         upload_page()
     elif page == "Costing":
@@ -54,23 +53,9 @@ def main():
 
 
 
-# Costing page
-def costing_page():
-    st.subheader("Cost Estimation 💲")
 
-    # Get the latest response from the session state
-    if 'latest_response' in st.session_state:
-        latest_response = st.session_state['latest_response']
-        cost, total_tokens, input_cost, pt, generative_cost, ct = calculate_cost(latest_response)
-        st.write(f"Estimated cost: ${cost:.6f}")
-        st.write(f"Total Tokens: {total_tokens}")
-        st.write(f"input prompt cost: {input_cost}")
-        st.write(f"Prompt Tokens: {pt}")
-        st.write(f"Completion cost: {generative_cost}")
-        st.write(f"Completion Tokens: {ct}")
 # Upload data to Azure Blob Storage
 def upload_page():
-   
     st.subheader("Upload Files to Storage 📤")
 
     # Upload multiple files to Azure Blob Storage
@@ -80,14 +65,82 @@ def upload_page():
             file_name = upload_file_to_blob(file, STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME)
             st.success(f"File '{file_name}' uploaded to '{CONTAINERNAME}/{file_name}'")
 
-    # Sidebar to display uploaded files
-    st.sidebar.caption("Uploaded Files in Azure Blob Storage")
+    # Display uploaded file names below the upload section
+    st.caption("Uploaded Files in Azure Blob Storage")
     uploaded_files = list_blob_files(STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME)
     for file_name in uploaded_files:
-        st.sidebar.write(file_name)
+        st.write(file_name)
 
+
+####### COSTING PAGE
+def costing_page():
+   ####### COSTING PAGE
+
+    st.caption("Please input your query and configure settings below 👇")
+
+    # User Input
+    user_input = st.text_area("User Input:", "")
+
+    # Initialize prompt if not in session state
+    if 'prompt' not in st.session_state:
+        st.session_state['prompt'] = "Please generate a response based on the following data:\n\n[Your data here]\n"
+
+    # Upload Data to Prompt Button
+    if st.button("Upload Data to Prompt"):
+        uploaded_files = list_blob_files(STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME)
+        all_data = []
+
+        for file_name in uploaded_files:
+            file_data = read_blob_data(STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME, file_name)
+            if file_data:
+                all_data.append(file_data)
+
+        combined_data = "\n".join(all_data)
+        st.session_state['prompt'] = f"Please generate a response based on the following data:\n\n{combined_data}\n"
+
+    # Prompt Input
+    prompt = st.text_area("Prompt:", st.session_state['prompt'])
+
+    # Temperature
+    temperature = st.slider("Temperature:", min_value=0.1, max_value=1.0, value=0.7, step=0.1)
+
+    # Max Tokens
+    max_tokens = st.number_input("Max Tokens:", min_value=1, value=1000)
+
+
+    # Generate Response Button
+    if st.button("Generate Response"):
+        input_prompt = prompt + f"\nUser Input: {user_input}"
+
+        response = openai.Completion.create(
+            engine="restaurant",
+            prompt=input_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+        assistant_reply = response.choices[0].text.strip()
+        st.write(assistant_reply)
+
+        # Calculate cost and display
+        cost, total_tokens, input_cost, pt, generative_cost, ct = calculate_cost(response)
+
+
+        # Create a table to display the costing details
+        cost_table = {
+            "Measure": ["Estimated cost", "Total Tokens", "Input Prompt Cost", "Prompt Tokens", "Completion Cost", "Completion Tokens"],
+            "Value": [f"{cost:.6f}", total_tokens, f"{input_cost:.6f}", pt, f"{generative_cost:.6f}", ct]
+        }
+
+        st.table(cost_table)
+        st.caption("Please note that all the price is in USD$")
+
+ 
+    
+            #####
 # Chat with the uploaded data
 def chat_page():
+    st.text("Welcome! Interact with the Data World 📂")
     
     st.caption("Please input your query below 👇")
     uploaded_files = list_blob_files(STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME)
@@ -115,7 +168,7 @@ def chat_page():
         )
         
         assistant_reply = response.choices[0].text.strip()
-        st.text(assistant_reply)
+        st.write(assistant_reply)
         st.session_state['latest_response'] = response
         # st.text(response.usage.prompt_tokens)
         # st.text(response.usage.completion_tokens)
