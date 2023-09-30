@@ -40,7 +40,7 @@ language_names = {
 
 # Define the Streamlit app
 def main():
-    st.set_page_config(page_title="HSBC ChatBot")
+    st.set_page_config(page_title="HSBC Azure ChatBot")
     
     # Add logo and company name in the sidebar
     st.sidebar.image("https://1000logos.net/wp-content/uploads/2017/02/HSBC-Logo.png", width=200 )
@@ -90,7 +90,7 @@ def costing_page():
 
     # Initialize prompt if not in session state
     if 'prompt' not in st.session_state:
-        st.session_state['prompt'] = "Please generate a response based on the following data:\n\n[Your data here]\n"
+        st.session_state['prompt'] = "You are a Azure Bot and you have certain information available to you. You only have to reply based on that information and for the rest of the stuff you need to Answer I don't know.  Here is the information below:\n\n[Your data here]\n"
 
     # Upload Data to Prompt Button
     if st.button("Upload Data to Prompt"):
@@ -103,7 +103,7 @@ def costing_page():
                 all_data.append(file_data)
 
         combined_data = "\n".join(all_data)
-        st.session_state['prompt'] = f"Please generate a response based on the following data:\n\n{combined_data}\n"
+        st.session_state['prompt'] = f"You are a Azure Bot and you have certain information available to you. You only have to reply based on that information and for the rest of the stuff you need to Answer I don't know.  Here is the information below:\n\n{combined_data}\n"
 
     # Prompt Input
     prompt = st.text_area("Prompt:", st.session_state['prompt'])
@@ -147,9 +147,14 @@ def costing_page():
             #####
 # Chat with the uploaded data
 def chat_page():
-    st.text("Welcome! Interact with the Data World 📂")
-    
-    st.caption("Please input your query below 👇")
+    col1, mid, col2 = st.columns([1,1,20])
+    with col1:
+        st.image("https://swimburger.net/media/fbqnp2ie/azure.svg", width=60)
+    with col2:
+        st.markdown('<h2 style="color: #0079d5;">Azure Chatbot</h2>',
+                            unsafe_allow_html=True)
+
+    st.caption("Please input your query below to chat with Azure Chatbot. 👇")
     uploaded_files = list_blob_files(STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME)
     all_data = []
 
