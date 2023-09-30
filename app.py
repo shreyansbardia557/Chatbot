@@ -28,8 +28,15 @@ endpoint = os.getenv('endpoint')
 location = os.getenv('location')
 path = '/translate'
 
-# List of target languages for translation
-target_languages = ["fr", "hi", "es", "de"]
+
+# Dictionary to map language  to full names
+language_names = {
+    "fr": "French",
+    "hi": "Hindi",
+    "es": "Spanish",
+    "de": "German",
+    # Add more languages as needed
+}
 
 # Define the Streamlit app
 def main():
@@ -175,7 +182,8 @@ def chat_page():
         # st.text(response.usage.total_tokens)
         st.session_state['translate_text'] = assistant_reply
 
-    selected_language = st.selectbox("Select Target Language:", target_languages)
+   
+    selected_language = st.selectbox("Select Target Language:", list(language_names.keys()), format_func=lambda x: language_names[x])
 
     if st.button("Translate"):
         if 'translate_text' not in st.session_state:
