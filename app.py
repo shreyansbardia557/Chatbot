@@ -41,16 +41,12 @@ language_names = {
 model_names = {
     "restaurant": "text-davinci-003",
     "htiOaiDEP": "gpt-35-turbo",
-    "gpt-35-turbo-16k": "gpt-35-turbo-16k",
-    "gpt-4":"gpt-4"
     # Add more languages as needed
 }
 
 model_cost = {
     "restaurant": 0.00002,
     "htiOaiDEP": 0.000015,
-    "gpt-35-turbo-16k": 0.00003,
-    "gpt-4":0.00004,
     # Add more languages as needed
 }
 # Define the Streamlit app
