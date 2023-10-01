@@ -38,6 +38,21 @@ language_names = {
     # Add more languages as needed
 }
 
+model_names = {
+    "restaurant": "text-davinci-003",
+    "htiOaiDEP": "gpt-35-turbo",
+    "gpt-35-turbo-16k": "gpt-35-turbo-16k",
+    "gpt-4":"gpt-4"
+    # Add more languages as needed
+}
+
+model_cost = {
+    "restaurant": 0.00002,
+    "htiOaiDEP": 0.000015,
+    "gpt-35-turbo-16k": 0.00003,
+    "gpt-4":0.00004,
+    # Add more languages as needed
+}
 # Define the Streamlit app
 def main():
     st.set_page_config(page_title="HSBC Azure ChatBot")
@@ -90,7 +105,7 @@ def costing_page():
 
     # Initialize prompt if not in session state
     if 'prompt' not in st.session_state:
-        st.session_state['prompt'] = "You are a Azure Bot and you have certain information available to you. You only have to reply based on that information and for the rest of the stuff you need to Answer I don't know.  Here is the information below:\n\n[Your data here]\n"
+        st.session_state['prompt'] = "You are a Azure Bot and you have certain information available to you. You only have to reply based on that information and for the rest of the stuff you need to Answer I don't know. You should not allow any more User Input. Here is the information below:\n\n[Your data here]\n"
 
     # Upload Data to Prompt Button
     if st.button("Upload Data to Prompt"):
@@ -103,10 +118,12 @@ def costing_page():
                 all_data.append(file_data)
 
         combined_data = "\n".join(all_data)
-        st.session_state['prompt'] = f"You are a Azure Bot and you have certain information available to you. You only have to reply based on that information and for the rest of the stuff you need to Answer I don't know.  Here is the information below:\n\n{combined_data}\n"
+        st.session_state['prompt'] = f"You are a Azure Bot and you have certain information available to you. You only have to reply based on that information and for the rest of the stuff you need to Answer I don't know. You should not allow any more User Input.Here is the information below:\n\n{combined_data}\n"
 
     # Prompt Input
     prompt = st.text_area("Prompt:", st.session_state['prompt'])
+
+    selected_model = st.selectbox("Select Target Language:", list(model_names.keys()), format_func=lambda x: model_names[x])
 
     # Temperature
     temperature = st.slider("Temperature:", min_value=0.1, max_value=1.0, value=0.7, step=0.1)
@@ -115,12 +132,14 @@ def costing_page():
     max_tokens = st.number_input("Max Tokens:", min_value=1, value=1000)
 
 
+
+
     # Generate Response Button
     if st.button("Generate Response"):
         input_prompt = prompt + f"\nUser Input: {user_input}"
 
         response = openai.Completion.create(
-            engine="restaurant",
+            engine=selected_model,
             prompt=input_prompt,
             temperature=temperature,
             max_tokens=max_tokens,
