@@ -85,6 +85,7 @@ def upload_page():
 
     # Display uploaded file names below the upload section
     st.caption("Uploaded Files in Azure Blob Storage")
+    st.write("For large documents click on this link. [Add_Document](https://hsbcai-site.azurewebsites.net/Add_Document)")
     uploaded_files = list_blob_files(STORAGEACCOUNTURL, STORAGEACCOUNTKEY, CONTAINERNAME)
     for file_name in uploaded_files:
         st.write(file_name)
@@ -215,6 +216,8 @@ def chat_page():
             translate = tanslator(key, endpoint, location, path, translate_text, selected_language)
             logger.info(translate)
             st.text(translate)
+
+    st.write("For doing Chat on large Uploaded Document use this. [Document Chat](https://hsbcai-site.azurewebsites.net/Chat)")
 
 if __name__ == "__main__":
     main()
